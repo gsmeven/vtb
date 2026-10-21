@@ -20,13 +20,30 @@ jobs:
         shell: pwsh
         run: |
           mkdir dist
+          # 1. Compila as duas ferramentas para a pasta ./dist/bin/
           cargo install --git https://github.com/LeagueToolkit/wadtools.git --root ./dist
           cargo install --git https://github.com/LeagueToolkit/ritobin-tools.git --root ./dist
 
-      - name: Compactar os executáveis em engine.zip
+      - name: Normalizar nomes e compactar (engine.zip)
         shell: pwsh
         run: |
-          Compress-Archive -Path ./dist/bin/*.exe -DestinationPath ./engine.zip -Force
+          # 2. Exibe no log exatamente os nomes que foram compilados
+          Write-Host "--- ARQUIVOS COMPILADOS NA PASTA DIST ---"
+          Get-ChildItem ./dist/bin
+
+          # 3. Força o nome de wadtools.exe (se já for wadtools.exe, mantém)
+          Get-ChildItem ./dist/bin | Where-Object { $_.Name -like "*wad*" } | ForEach-Object {
+              Move-Item -Path $_.FullName -Destination "./dist/bin/wadtools.exe" -Force
+          }
+
+          # 4. Força o nome de ritobin.exe (seja ritobin-tools ou ritobin, vira ritobin.exe)
+          Get-ChildItem ./dist/bin | Where-Object { $_.Name -like "*ritobin*" } | ForEach-Object {
+              Move-Item -Path $_.FullName -Destination "./dist/bin/ritobin.exe" -Force
+          }
+
+          # 5. Compacta apenas os dois arquivos definitivos
+          Compress-Archive -Path ./dist/bin/wadtools.exe, ./dist/bin/ritobin.exe -DestinationPath ./engine.zip -Force
+          Write-Host "--- ENGINE.ZIP CRIADO COM SUCESSO COM OS NOMES CORRETOS ---"
 
       - name: Publicar Release
         uses: softprops/action-gh-release@v2
