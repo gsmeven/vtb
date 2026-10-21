@@ -69,7 +69,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: engine-latest
-          name: "vtb-tools (Latest LeagueToolkit)"
+          name: "vtb-tools (Latest LTK)"
           body: "Compiled from upstream parser commits: ${{ steps.check_upstream.outputs.current_state }}"
           files: ./engine.zip
           draft: false
