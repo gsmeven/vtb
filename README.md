@@ -2,8 +2,8 @@
 
 > Automated CI/CD pipeline that builds and serves bleeding-edge Windows binaries of **League Toolkit (LTK)** tools for **Vanilla True Builder**.
 
-[![Build and Release Tools](https://github.com/SEU-USUARIO/SEU-REPO/actions/workflows/build.yml/badge.svg)](https://github.com/SEU-USUARIO/SEU-REPO/actions/workflows/build.yml)
-[![Latest Release](https://img.shields.io/github/v/release/SEU-USUARIO/SEU-REPO?label=release&color=blue)](https://github.com/SEU-USUARIO/SEU-REPO/releases/tag/tools-latest)
+[![Build and Release Tools](https://github.com/gsmeven/vtb-ltk-tools/actions/workflows/build.yml/badge.svg)](https://github.com/gsmeven/vtb-ltk-tools/actions/workflows/build.yml)
+[![Latest Release](https://img.shields.io/github/v/release/gsmeven/vtb-ltk-tools?label=release&color=blue)](https://github.com/gsmeven/vtb-ltk-tools/releases/tag/tools-latest)
 [![Check Cadence](https://img.shields.io/badge/cron-every%203%20hours-brightgreen)](#how-it-works)
 
 ---
