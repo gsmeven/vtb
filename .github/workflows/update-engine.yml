@@ -27,16 +27,14 @@ jobs:
       - name: Normalizar nomes e compactar (engine.zip)
         shell: pwsh
         run: |
-          # 2. Exibe no log exatamente os nomes que foram compilados
+
           Write-Host "--- ARQUIVOS COMPILADOS NA PASTA DIST ---"
           Get-ChildItem ./dist/bin
 
-          # 3. Força o nome de wadtools.exe (se já for wadtools.exe, mantém)
           Get-ChildItem ./dist/bin | Where-Object { $_.Name -like "*wad*" } | ForEach-Object {
               Move-Item -Path $_.FullName -Destination "./dist/bin/wadtools.exe" -Force
           }
 
-          # 4. Força o nome de ritobin.exe (seja ritobin-tools ou ritobin, vira ritobin.exe)
           Get-ChildItem ./dist/bin | Where-Object { $_.Name -like "*ritobin*" } | ForEach-Object {
               Move-Item -Path $_.FullName -Destination "./dist/bin/ritobin.exe" -Force
           }
