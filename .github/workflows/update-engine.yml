@@ -1,9 +1,8 @@
 name: Build and Release Engine
 
 on:
-  workflow_dispatch: # Permite você clicar no botão e compilar na hora
+  workflow_dispatch:
   schedule:
-    # Checa a cada 3 horas
     - cron: '0 */3 * * *'
 
 permissions:
@@ -14,42 +13,38 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Checar commits exclusivos de ritobin e wadtools
+      - name: Check upstream commits for ritobin and wadtools
         id: check_upstream
         shell: pwsh
         run: |
-          # 1. Pega os commits dos repositórios dedicados de ferramentas
           $wadtools_sha = (Invoke-RestMethod -Uri "https://api.github.com/repos/LeagueToolkit/wadtools/commits?sha=main&per_page=1")[0].sha.Substring(0, 8)
           $ritobin_sha  = (Invoke-RestMethod -Uri "https://api.github.com/repos/LeagueToolkit/ritobin-tools/commits?sha=main&per_page=1")[0].sha.Substring(0, 8)
-
-          # 2. No monorepo do league-toolkit, filtra EXCLUSIVAMENTE as pastas ltk_ritobin e ltk_wad
           $ltk_ritobin_sha = (Invoke-RestMethod -Uri "https://api.github.com/repos/LeagueToolkit/league-toolkit/commits?path=crates/ltk_ritobin&sha=main&per_page=1")[0].sha.Substring(0, 8)
           $ltk_wad_sha     = (Invoke-RestMethod -Uri "https://api.github.com/repos/LeagueToolkit/league-toolkit/commits?path=crates/ltk_wad&sha=main&per_page=1")[0].sha.Substring(0, 8)
 
           $current_state = "wadtools:$wadtools_sha | ritobin_tools:$ritobin_sha | ltk_ritobin:$ltk_ritobin_sha | ltk_wad:$ltk_wad_sha"
-          Write-Host "Estado dos parsers de BIN/WAD: $current_state"
+          Write-Host "Upstream parser state: $current_state"
 
-          # 3. Compara com a última release gerada
           $repo = "${{ github.repository }}"
           $needs_build = $true
           try {
               $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/tags/engine-latest"
               if ($release.body -and $release.body.Contains($current_state) -and "${{ github.event_name }}" -ne "workflow_dispatch") {
-                  Write-Host "Nenhum commit afetou o ritobin ou o wadtools. Pulando compilação!"
+                  Write-Host "No relevant upstream changes detected. Skipping build."
                   $needs_build = $false
               }
           } catch {
-              Write-Host "Primeira compilação ou release ainda inexistente."
+              Write-Host "Initial release build or tag not found."
           }
 
           echo "needs_build=$needs_build" >> $env:GITHUB_OUTPUT
           echo "current_state=$current_state" >> $env:GITHUB_OUTPUT
 
-      - name: Instalar Rust
+      - name: Setup Rust
         if: steps.check_upstream.outputs.needs_build == 'true'
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Compilar wadtools e ritobin da LeagueToolkit
+      - name: Compile wadtools and ritobin
         if: steps.check_upstream.outputs.needs_build == 'true'
         shell: pwsh
         run: |
@@ -57,7 +52,7 @@ jobs:
           cargo install --git https://github.com/LeagueToolkit/wadtools.git --root ./dist
           cargo install --git https://github.com/LeagueToolkit/ritobin-tools.git --root ./dist
 
-      - name: Normalizar nomes e compactar (engine.zip)
+      - name: Normalize binaries and package
         if: steps.check_upstream.outputs.needs_build == 'true'
         shell: pwsh
         run: |
@@ -69,13 +64,13 @@ jobs:
           }
           Compress-Archive -Path ./dist/bin/wadtools.exe, ./dist/bin/ritobin.exe -DestinationPath ./engine.zip -Force
 
-      - name: Publicar Release
+      - name: Publish Release
         if: steps.check_upstream.outputs.needs_build == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: engine-latest
           name: "Vanilla Engine (Latest LeagueToolkit)"
-          body: "Compilado com base nos commits dos parsers: ${{ steps.check_upstream.outputs.current_state }}"
+          body: "Compiled from upstream parser commits: ${{ steps.check_upstream.outputs.current_state }}"
           files: ./engine.zip
           draft: false
           prerelease: false
