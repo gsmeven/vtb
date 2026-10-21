@@ -69,4 +69,3 @@ For **Vanilla True Builder** scripts or manual usage, the latest bundle can alwa
 
 * **[League Toolkit](https://github.com/LeagueToolkit):** Enormous thanks to the LTK team and contributors for maintaining the core open-source League of Legends modding infrastructure.
 * **Disclaimer:** This project is an independent tool and is not affiliated with, endorsed by, or sponsored by Riot Games. League of Legends is a registered trademark of Riot Games, Inc.
-```
