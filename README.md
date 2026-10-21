@@ -2,9 +2,9 @@
 
 > Automated CI/CD pipeline that builds and serves bleeding-edge Windows binaries of **League Toolkit (LTK)** tools for **Vanilla True Builder**.
 
-[![Build and Release Tools](https://github.com/gsmeven/vtb-ltk-tools/actions/workflows/build.yml/badge.svg)](https://github.com/gsmeven/vtb-ltk-tools/actions/workflows/build.yml)
-[![Latest Release](https://img.shields.io/github/v/release/gsmeven/vtb-ltk-tools?label=release&color=blue)](https://github.com/gsmeven/vtb-ltk-tools/releases/tag/tools-latest)
-[![Check Cadence](https://img.shields.io/badge/cron-every%203%20hours-brightgreen)](#how-it-works)
+[![Build and Release Tools](https://github.com/gsmeven/vtb-ltk-tools/actions/workflows/build.yml/badge.svg)](https://github.com/gsmeven/vtb-ltk-tools/actions)
+[![Release: tools-latest](https://img.shields.io/badge/release-tools--latest-blue?logo=github)](https://github.com/gsmeven/vtb-ltk-tools/releases/tag/tools-latest)
+[![Check Cadence](https://img.shields.io/badge/cron-every%203%20hours-brightgreen)](#-how-it-works)
 
 ---
 
@@ -28,12 +28,45 @@ Every 3 hours, a GitHub Actions workflow monitors the upstream **League Toolkit*
 ## ⚙️ How It Works
 
 ```mermaid
-graph LR
-    A[Cron: Every 3h] --> B[Check Upstream Git SHAs]
-    B -->|Has Changes?| C{Diff Check}
-    C -->|No Changes| D[Skip / Terminate]
-    C -->|New Commits| E[Cargo Build on Windows]
-    E --> F[Normalize Names to .exe]
-    F --> G[Package tools.zip]
-    G --> H[Update Release: tools-latest]
-    H --> I[Vanilla True Builder Auto-Update]
+flowchart TD
+    A["⏱️ Cron (Every 3h)"] --> B["🔍 Check Upstream Git SHAs"]
+    B --> C{"Changes Detected?"}
+    C -- "No" --> D["⏹️ Skip & Terminate"]
+    C -- "Yes" --> E["🔨 Cargo Build on Windows"]
+    E --> F["📝 Normalize to wadtools.exe & ritobin.exe"]
+    F --> G["📦 Create tools.zip"]
+    G --> H["🚀 Update Release (tools-latest)"]
+    H --> I["🎮 Vanilla True Builder Auto-Update"]
+```
+
+1. **Smart Commit-State Diffing:**  
+   The runner queries the GitHub API for the latest commit hashes across upstream locations:
+   - `LeagueToolkit/wadtools` (`main`)
+   - `LeagueToolkit/ritobin-tools` (`main`)
+   - `LeagueToolkit/league-toolkit` (`crates/ltk_ritobin`)
+   - `LeagueToolkit/league-toolkit` (`crates/ltk_wad`)
+
+2. **Zero Resource Waste:**  
+   If the upstream state matches the current description in the `tools-latest` release, the runner exits immediately to conserve GitHub Action minutes.
+
+3. **Clean Windows Compilation:**  
+   Uses standard Rust stable toolchain on `windows-latest` to build standalone executables via `cargo install`.
+
+4. **Predictable Packaging:**  
+   Normalizes the binary filenames (`wadtools.exe` and `ritobin.exe`), bundles them into `tools.zip`, and updates the permanent release tag: `tools-latest`.
+
+---
+
+## 📦 Direct Download
+
+For **Vanilla True Builder** scripts or manual usage, the latest bundle can always be fetched directly from:
+
+🔗 **[Download tools.zip (Latest Release)](https://github.com/gsmeven/vtb-ltk-tools/releases/download/tools-latest/tools.zip)**
+
+---
+
+## 🤝 Credits & Acknowledgments
+
+* **[League Toolkit](https://github.com/LeagueToolkit):** Enormous thanks to the LTK team and contributors for maintaining the core open-source League of Legends modding infrastructure.
+* **Disclaimer:** This project is an independent tool and is not affiliated with, endorsed by, or sponsored by Riot Games. League of Legends is a registered trademark of Riot Games, Inc.
+```
