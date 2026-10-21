@@ -20,7 +20,7 @@ jobs:
         shell: pwsh
         run: |
           mkdir dist
-          # 1. Compila as duas ferramentas para a pasta ./dist/bin/
+
           cargo install --git https://github.com/LeagueToolkit/wadtools.git --root ./dist
           cargo install --git https://github.com/LeagueToolkit/ritobin-tools.git --root ./dist
 
