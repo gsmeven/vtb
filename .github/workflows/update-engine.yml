@@ -1,0 +1,40 @@
+name: Build and Release Engine
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * 3' # Roda toda quarta-feira às 12:00 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Instalar Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Compilar wadtools e ritobin da LeagueToolkit
+        shell: pwsh
+        run: |
+          mkdir dist
+          cargo install --git https://github.com/LeagueToolkit/wadtools.git --root ./dist
+          cargo install --git https://github.com/LeagueToolkit/ritobin-tools.git --root ./dist
+
+      - name: Compactar os executáveis em engine.zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path ./dist/bin/*.exe -DestinationPath ./engine.zip -Force
+
+      - name: Publicar Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: engine-latest
+          name: "Vanilla Engine (Latest LeagueToolkit)"
+          files: ./engine.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
