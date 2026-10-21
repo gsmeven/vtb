@@ -27,18 +27,6 @@ Every 3 hours, a GitHub Actions workflow monitors the upstream **League Toolkit*
 
 ## ⚙️ How It Works
 
-```mermaid
-flowchart TD
-    A["⏱️ Cron (Every 3h)"] --> B["🔍 Check Upstream Git SHAs"]
-    B --> C{"Changes Detected?"}
-    C -- "No" --> D["⏹️ Skip & Terminate"]
-    C -- "Yes" --> E["🔨 Cargo Build on Windows"]
-    E --> F["📝 Normalize to wadtools.exe & ritobin.exe"]
-    F --> G["📦 Create tools.zip"]
-    G --> H["🚀 Update Release (tools-latest)"]
-    H --> I["🎮 Vanilla True Builder Auto-Update"]
-```
-
 1. **Smart Commit-State Diffing:**  
    The runner queries the GitHub API for the latest commit hashes across upstream locations:
    - `LeagueToolkit/wadtools` (`main`)
