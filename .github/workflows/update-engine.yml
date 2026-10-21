@@ -1,52 +1,81 @@
 name: Build and Release Engine
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Permite você clicar no botão e compilar na hora
   schedule:
-    - cron: '0 12 * * 3' # Roda toda quarta-feira às 12:00 UTC
+    # Checa a cada 3 horas
+    - cron: '0 */3 * * *'
 
 permissions:
   contents: write
 
 jobs:
-  build-windows:
+  check-and-build:
     runs-on: windows-latest
 
     steps:
+      - name: Checar commits exclusivos de ritobin e wadtools
+        id: check_upstream
+        shell: pwsh
+        run: |
+          # 1. Pega os commits dos repositórios dedicados de ferramentas
+          $wadtools_sha = (Invoke-RestMethod -Uri "https://api.github.com/repos/LeagueToolkit/wadtools/commits?sha=main&per_page=1")[0].sha.Substring(0, 8)
+          $ritobin_sha  = (Invoke-RestMethod -Uri "https://api.github.com/repos/LeagueToolkit/ritobin-tools/commits?sha=main&per_page=1")[0].sha.Substring(0, 8)
+
+          # 2. No monorepo do league-toolkit, filtra EXCLUSIVAMENTE as pastas ltk_ritobin e ltk_wad
+          $ltk_ritobin_sha = (Invoke-RestMethod -Uri "https://api.github.com/repos/LeagueToolkit/league-toolkit/commits?path=crates/ltk_ritobin&sha=main&per_page=1")[0].sha.Substring(0, 8)
+          $ltk_wad_sha     = (Invoke-RestMethod -Uri "https://api.github.com/repos/LeagueToolkit/league-toolkit/commits?path=crates/ltk_wad&sha=main&per_page=1")[0].sha.Substring(0, 8)
+
+          $current_state = "wadtools:$wadtools_sha | ritobin_tools:$ritobin_sha | ltk_ritobin:$ltk_ritobin_sha | ltk_wad:$ltk_wad_sha"
+          Write-Host "Estado dos parsers de BIN/WAD: $current_state"
+
+          # 3. Compara com a última release gerada
+          $repo = "${{ github.repository }}"
+          $needs_build = $true
+          try {
+              $release = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases/tags/engine-latest"
+              if ($release.body -and $release.body.Contains($current_state) -and "${{ github.event_name }}" -ne "workflow_dispatch") {
+                  Write-Host "Nenhum commit afetou o ritobin ou o wadtools. Pulando compilação!"
+                  $needs_build = $false
+              }
+          } catch {
+              Write-Host "Primeira compilação ou release ainda inexistente."
+          }
+
+          echo "needs_build=$needs_build" >> $env:GITHUB_OUTPUT
+          echo "current_state=$current_state" >> $env:GITHUB_OUTPUT
+
       - name: Instalar Rust
+        if: steps.check_upstream.outputs.needs_build == 'true'
         uses: dtolnay/rust-toolchain@stable
 
       - name: Compilar wadtools e ritobin da LeagueToolkit
+        if: steps.check_upstream.outputs.needs_build == 'true'
         shell: pwsh
         run: |
-          mkdir dist
-
+          mkdir dist -Force
           cargo install --git https://github.com/LeagueToolkit/wadtools.git --root ./dist
           cargo install --git https://github.com/LeagueToolkit/ritobin-tools.git --root ./dist
 
       - name: Normalizar nomes e compactar (engine.zip)
+        if: steps.check_upstream.outputs.needs_build == 'true'
         shell: pwsh
         run: |
-
-          Write-Host "--- ARQUIVOS COMPILADOS NA PASTA DIST ---"
-          Get-ChildItem ./dist/bin
-
           Get-ChildItem ./dist/bin | Where-Object { $_.Name -like "*wad*" } | ForEach-Object {
               Move-Item -Path $_.FullName -Destination "./dist/bin/wadtools.exe" -Force
           }
-
           Get-ChildItem ./dist/bin | Where-Object { $_.Name -like "*ritobin*" } | ForEach-Object {
               Move-Item -Path $_.FullName -Destination "./dist/bin/ritobin.exe" -Force
           }
-
           Compress-Archive -Path ./dist/bin/wadtools.exe, ./dist/bin/ritobin.exe -DestinationPath ./engine.zip -Force
-          Write-Host "--- ENGINE.ZIP CRIADO COM SUCESSO COM OS NOMES CORRETOS ---"
 
       - name: Publicar Release
+        if: steps.check_upstream.outputs.needs_build == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: engine-latest
           name: "Vanilla Engine (Latest LeagueToolkit)"
+          body: "Compilado com base nos commits dos parsers: ${{ steps.check_upstream.outputs.current_state }}"
           files: ./engine.zip
           draft: false
           prerelease: false
