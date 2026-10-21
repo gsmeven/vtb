@@ -39,7 +39,6 @@ jobs:
               Move-Item -Path $_.FullName -Destination "./dist/bin/ritobin.exe" -Force
           }
 
-          # 5. Compacta apenas os dois arquivos definitivos
           Compress-Archive -Path ./dist/bin/wadtools.exe, ./dist/bin/ritobin.exe -DestinationPath ./engine.zip -Force
           Write-Host "--- ENGINE.ZIP CRIADO COM SUCESSO COM OS NOMES CORRETOS ---"
 
