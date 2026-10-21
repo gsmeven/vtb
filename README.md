@@ -1,4 +1,4 @@
-# ⚡ VTB — LTK Tools Auto-Builder
+# LTK Tools Auto-Builder (EXE)
 
 > Automated CI/CD pipeline that builds and serves bleeding-edge Windows binaries of **League Toolkit (LTK)** tools for **Vanilla True Builder**.
 
