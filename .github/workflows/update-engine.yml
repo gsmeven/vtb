@@ -1,4 +1,4 @@
-name: Build and Release Engine
+name: Build and Release Tools
 
 on:
   workflow_dispatch:
@@ -68,10 +68,10 @@ jobs:
         if: steps.check_upstream.outputs.needs_build == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: engine-latest
-          name: "vtb-tools (Latest LTK)"
+          tag_name: tools-latest
+          name: "ltk-tools (Latest)"
           body: "Compiled from upstream parser commits: ${{ steps.check_upstream.outputs.current_state }}"
-          files: ./engine.zip
+          files: ./tools.zip
           draft: false
           prerelease: false
         env:
