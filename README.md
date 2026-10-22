@@ -1,4 +1,4 @@
-# LTK Tools Auto-Builder (EXE)
+# vanilla-true-builder tools
 
 > Automated CI/CD pipeline that builds and serves bleeding-edge Windows binaries of **League Toolkit (LTK)** tools for **Vanilla True Builder**.
 
